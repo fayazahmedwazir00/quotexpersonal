@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quotex AI Analyzer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0a0f;--panel:#0f0f18;--border:rgba(255,255,255,.08);
+  --text:#e8e8f0;--dim:#7d7d97;--accent:#7c5cff;--accent2:#00d4ff;
+  --green:#3ddc84;--red:#ff4d6d;--gold:#ffc857;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 12% 15%,rgba(124,92,255,.16),transparent 42%),
+    radial-gradient(circle at 88% 85%,rgba(0,212,255,.12),transparent 45%);}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:20px;}
+
+/* header */
+header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.logo{width:42px;height:42px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:grid;place-items:center;font-size:20px;color:#fff;
+  box-shadow:0 6px 20px rgba(124,92,255,.4);}
+h1{font-size:19px;font-weight:700;letter-spacing:.3px;}
+.sub{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1.2px;}
+
+/* panels */
+.card{background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:22px;margin-bottom:18px;}
+.card h2{font-size:14px;letter-spacing:1px;color:var(--dim);
+  text-transform:uppercase;margin-bottom:16px;}
+
+/* form */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--dim);
+  margin-bottom:6px;font-weight:600;}
+input,select{width:100%;padding:12px 14px;border-radius:10px;
+  background:rgba(255,255,255,.04);color:var(--text);
+  border:1px solid var(--border);font-size:14px;outline:none;
+  font-family:inherit;transition:.2s;}
+input:focus,select:focus{border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(124,92,255,.1);}
+select{appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%237d7d97' d='M0 0l5 6 5-6z'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+option{background:#16161f;}
+
+/* buttons */
+.btn{width:100%;padding:14px;border-radius:11px;border:none;cursor:pointer;
+  font-size:15px;font-weight:700;letter-spacing:.4px;transition:.2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-family:inherit;}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#5a3ee8);
+  color:#fff;box-shadow:0 6px 18px rgba(124,92,255,.4);}
+.btn.primary:hover{transform:translateY(-1px);
+  box-shadow:0 8px 22px rgba(124,92,255,.5);}
+.btn.primary:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn.gold{background:linear-gradient(135deg,#ffc857,#ff9e3d);
+  color:#1a1a28;box-shadow:0 6px 20px rgba(255,200,87,.35);}
+.btn.gold:hover{transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(255,200,87,.5);}
+
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.row{grid-template-columns:1fr;}}
+
+/* toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-radius:10px;
+  background:rgba(255,77,109,.05);border:1px solid rgba(255,77,109,.2);
+  margin-bottom:14px;}
+.toggle-row label{font-size:13px;font-weight:600;}
+.toggle-row .sub2{font-size:11px;color:var(--dim);margin-top:2px;}
+.switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;inset:0;
+  background:rgba(255,255,255,.1);border-radius:26px;transition:.3s;}
+.slider::before{content:'';position:absolute;
+  height:20px;width:20px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;transition:.3s;}
+input:checked + .slider{background:var(--red);}
+input:checked + .slider::before{transform:translateX(20px);}
+
+/* status badge */
+.badge{display:inline-flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:20px;font-size:11.5px;
+  font-weight:600;letter-spacing:.3px;}
+.badge.ok{background:rgba(61,220,132,.15);color:var(--green);
+  border:1px solid rgba(61,220,132,.3);}
+.badge.err{background:rgba(255,77,109,.15);color:var(--red);
+  border:1px solid rgba(255,77,109,.3);}
+.badge.info{background:rgba(124,92,255,.15);color:#b8a8ff;
+  border:1px solid rgba(124,92,255,.3);}
+.badge .dot{width:7px;height:7px;border-radius:50%;
+  background:currentColor;box-shadow:0 0 8px currentColor;}
+
+/* messages */
+.msg{padding:12px 14px;border-radius:10px;font-size:13.5px;
+  margin-bottom:12px;line-height:1.5;}
+.msg.error{background:rgba(255,77,109,.1);
+  border:1px solid rgba(255,77,109,.3);color:#ff8fa3;}
+.msg.warn{background:rgba(255,200,87,.1);
+  border:1px solid rgba(255,200,87,.3);color:var(--gold);}
+.msg.ok{background:rgba(61,220,132,.1);
+  border:1px solid rgba(61,220,132,.3);color:var(--green);}
+.msg.info{background:rgba(0,212,255,.08);
+  border:1px solid rgba(0,212,255,.25);color:var(--accent2);}
+
+/* model results grid */
+.models{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:10px;margin-top:12px;}
+.model-row{display:flex;align-items:center;gap:10px;
+  padding:11px 12px;border-radius:10px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  transition:.2s;}
+.model-row.call{border-color:rgba(61,220,132,.4);
+  background:rgba(61,220,132,.05);}
+.model-row.put{border-color:rgba(255,77,109,.4);
+  background:rgba(255,77,109,.05);}
+.model-row.neutral{border-color:rgba(255,200,87,.3);
+  background:rgba(255,200,87,.04);}
+.model-row.error{border-color:rgba(255,77,109,.3);opacity:.6;}
+.model-short{width:34px;height:34px;border-radius:9px;
+  display:grid;place-items:center;font-size:11px;font-weight:800;
+  background:linear-gradient(135deg,#2a2a3d,#1a1a28);
+  border:1px solid var(--border);color:var(--accent2);flex-shrink:0;}
+.model-row.call .model-short{background:rgba(61,220,132,.2);
+  color:var(--green);border-color:rgba(61,220,132,.4);}
+.model-row.put .model-short{background:rgba(255,77,109,.2);
+  color:var(--red);border-color:rgba(255,77,109,.4);}
+.model-info{flex:1;min-width:0;}
+.model-name{font-size:12.5px;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.model-reason{font-size:10.5px;color:var(--dim);margin-top:2px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;word-break:break-word;line-height:1.35;}
+.model-right{display:flex;flex-direction:column;align-items:flex-end;
+  gap:4px;flex-shrink:0;}
+.model-decision{font-size:10px;font-weight:800;letter-spacing:.5px;
+  padding:2px 7px;border-radius:5px;}
+.model-row.call .model-decision{background:rgba(61,220,132,.2);
+  color:var(--green);}
+.model-row.put .model-decision{background:rgba(255,77,109,.2);
+  color:var(--red);}
+.model-row.neutral .model-decision{background:rgba(255,200,87,.2);
+  color:var(--gold);}
+.model-conf{font-family:monospace;font-size:11.5px;
+  color:var(--dim);font-weight:700;}
+
+/* final decision */
+.final{margin-top:20px;padding:24px;border-radius:16px;
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,rgba(255,200,87,.1),rgba(124,92,255,.08));
+  border:2px solid rgba(255,200,87,.55);
+  box-shadow:0 0 30px rgba(255,200,87,.2);}
+.final.call{background:linear-gradient(135deg,rgba(61,220,132,.15),rgba(0,212,255,.08));
+  border-color:rgba(61,220,132,.6);
+  box-shadow:0 0 30px rgba(61,220,132,.25);}
+.final.put{background:linear-gradient(135deg,rgba(255,77,109,.15),rgba(255,92,200,.08));
+  border-color:rgba(255,77,109,.6);
+  box-shadow:0 0 30px rgba(255,77,109,.25);}
+.final.none{background:linear-gradient(135deg,rgba(255,200,87,.12),rgba(124,92,255,.08));
+  border-color:rgba(255,200,87,.55);}
+.final-label{font-size:10.5px;letter-spacing:2.5px;font-weight:800;
+  color:var(--gold);text-transform:uppercase;margin-bottom:6px;}
+.final.call .final-label{color:var(--green);}
+.final.put .final-label{color:var(--red);}
+.final-decision{font-size:34px;font-weight:900;letter-spacing:-1px;
+  color:var(--gold);line-height:1.05;}
+.final.call .final-decision{color:var(--green);
+  text-shadow:0 0 20px rgba(61,220,132,.5);}
+.final.put .final-decision{color:var(--red);
+  text-shadow:0 0 20px rgba(255,77,109,.5);}
+.final-conf{font-size:15px;color:var(--text);margin-top:6px;font-weight:600;}
+.final-votes{font-size:12px;color:var(--dim);margin-top:8px;
+  font-family:monospace;letter-spacing:.3px;}
+
+/* progress bar */
+.progress{height:8px;border-radius:4px;background:rgba(255,255,255,.06);
+  overflow:hidden;margin-top:14px;display:flex;}
+.progress .seg{height:100%;transition:width .8s cubic-bezier(.4,1.4,.4,1);}
+.progress .call{background:linear-gradient(90deg,#3ddc84,#2ab86a);}
+.progress .put{background:linear-gradient(90deg,#ff4d6d,#c4384f);}
+.progress .neutral{background:linear-gradient(90deg,#ffc857,#ff9e3d);}
+
+/* spinner */
+.spinner{width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(0,212,255,.2);border-top-color:var(--accent2);
+  animation:spin .8s linear infinite;display:inline-block;
+  vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* small meta */
+.meta{font-size:11.5px;color:var(--dim);font-family:monospace;
+  margin-top:10px;text-align:right;letter-spacing:.3px;}
+
+/* hidden utility */
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo">◆</div>
+    <div>
+      <h1>Quotex AI Analyzer</h1>
+      <div class="sub">8-Model Ensemble · Real Data</div>
+    </div>
+    <div style="margin-left:auto;" id="topStatus"></div>
+  </header>
+
+  <!-- STEP 1: LOGIN -->
+  <div class="card" id="loginCard">
+    <h2>Step 1 · Login to Quotex</h2>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Your Quotex password" autocomplete="current-password">
+    </div>
+    <button class="btn primary" id="loginBtn">🔐 Login</button>
+    <div id="loginMsg" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- STEP 2: PIN -->
+  <div class="card hidden" id="pinCard">
+    <h2>Step 2 · Enter PIN</h2>
+    <div class="msg info" style="margin-bottom:14px;">
+      Quotex ne aap ki email par ek PIN bheja hai. Yahan enter karein.
+    </div>
+    <div class="field">
+      <label>PIN code</label>
+      <input type="text" id="pin" placeholder="123456" inputmode="numeric" maxlength="10">
+    </div>
+    <button class="btn primary" id="pinBtn">✓ Submit PIN</button>
+    <div id="pinMsg" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- STEP 3: ANALYZE -->
+  <div class="card hidden" id="analyzeCard">
+    <h2>Step 3 · Analyze</h2>
+
+    <div class="row">
+      <div class="field">
+        <label>Symbol</label>
+        <select id="symbol"></select>
+      </div>
+      <div class="field">
+        <label>Timeframe</label>
+        <select id="timeframe">
+          <option value="60">1 minute</option>
+          <option value="120">2 minutes</option>
+          <option value="300">5 minutes</option>
+          <option value="900">15 minutes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Account Mode</label>
+        <select id="accountMode">
+          <option value="PRACTICE">Demo (Practice)</option>
+          <option value="REAL">Real (Live)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Trade Type (if auto)</label>
+        <select id="tradeMode">
+          <option value="TIMER">TIMER (next candle)</option>
+          <option value="TIME">TIME (fixed time)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <label>Auto-Trade</label>
+        <div class="sub2">Default OFF · Test ke liye ON karein</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="autoTrade">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <button class="btn gold" id="analyzeBtn">🔍 ANALYZE NOW</button>
+    <div id="analyzeMsg" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card hidden" id="resultCard">
+    <h2>Result · 8 AI Ensemble</h2>
+    <div id="modelGrid" class="models"></div>
+    <div id="finalBox"></div>
+    <div id="tradeBox"></div>
+    <div class="meta" id="metaInfo"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card hidden" id="historyCard">
+    <h2>Recent Analyses</h2>
+    <div id="historyList" style="font-size:13px;color:var(--dim);"></div>
+  </div>
+
+</div>
+
+<script>
+// ⚙️ API URL — Cloudflare tunnel URL yahan paste karein
+// Local testing ke liye: ''  (same origin)
+window.API = window.location.origin;
+
+const $ = id => document.getElementById(id);
+let SESSION_ID = null;
+let pollTimer = null;
+
+// ─── load symbols ───
+async function loadSymbols() {
+  try {
+    const r = await fetch(window.API + '/symbols');
+    const j = await r.json();
+    const sel = $('symbol');
+    sel.innerHTML = '';
+    j.symbols.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      sel.appendChild(o);
+    });
+    // default
+    sel.value = 'EURUSD_otc';
+  } catch(e) { console.error('symbols load failed', e); }
+}
+
+// ─── login ───
+$('loginBtn').addEventListener('click', async () => {
+  const email = $('email').value.trim();
+  const password = $('password').value;
+  if (!email || !password) {
+    showMsg('loginMsg', 'error', 'Email aur password dono zaroori hain.');
+    return;
+  }
+  $('loginBtn').disabled = true;
+  showMsg('loginMsg', 'info', '<span class="spinner"></span>Connecting to Quotex…');
+
+  try {
+    const r = await fetch(window.API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const j = await r.json();
+
+    if (j.need_pin) {
+      SESSION_ID = j.session_id;
+      showMsg('loginMsg', 'ok', '✅ Credentials accepted. Check your email for PIN.');
+      $('pinCard').classList.remove('hidden');
+      $('pin').focus();
+      return;
+    }
+
+    if (j.logged_in) {
+      SESSION_ID = j.session_id;
+      showMsg('loginMsg', 'ok', '✅ Logged in successfully!');
+      onLoggedIn();
+      return;
+    }
+
+    showMsg('loginMsg', 'error', '❌ ' + (j.error || 'Login failed'));
+    $('loginBtn').disabled = false;
+  } catch(e) {
+    showMsg('loginMsg', 'error', '❌ Network error: ' + e.message);
+    $('loginBtn').disabled = false;
+  }
+});
+
+// ─── PIN submit ───
+$('pinBtn').addEventListener('click', async () => {
+  const pin = $('pin').value.trim();
+  if (!pin) { showMsg('pinMsg', 'error', 'PIN khali hai.'); return; }
+  if (!SESSION_ID) { showMsg('pinMsg', 'error', 'Session nahi mila.'); return; }
+
+  $('pinBtn').disabled = true;
+  showMsg('pinMsg', 'info', '<span class="spinner"></span>Submitting PIN…');
+
+  try {
+    await fetch(window.API + '/submit-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID, pin })
+    });
+
+    showMsg('pinMsg', 'info', '<span class="spinner"></span>Verifying login…');
+    pollLoginStatus();
+  } catch(e) {
+    showMsg('pinMsg', 'error', '❌ ' + e.message);
+    $('pinBtn').disabled = false;
+  }
+});
+
+function pollLoginStatus() {
+  let tries = 0;
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    tries++;
+    try {
+      const r = await fetch(window.API + '/login-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: SESSION_ID })
+      });
+      const j = await r.json();
+      if (j.logged_in) {
+        clearInterval(pollTimer);
+        showMsg('pinMsg', 'ok', '✅ PIN accepted. Logged in!');
+        onLoggedIn();
+        return;
+      }
+      if (tries > 40) {
+        clearInterval(pollTimer);
+        showMsg('pinMsg', 'error', '❌ Login timeout. Try again.');
+        $('pinBtn').disabled = false;
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }, 1500);
+}
+
+function onLoggedIn() {
+  $('loginCard').classList.add('hidden');
+  $('pinCard').classList.add('hidden');
+  $('analyzeCard').classList.remove('hidden');
+  $('historyCard').classList.remove('hidden');
+  $('topStatus').innerHTML = '<span class="badge ok"><span class="dot"></span>Connected</span>';
+  loadHistory();
+}
+
+// ─── account mode switch ───
+$('accountMode').addEventListener('change', async (e) => {
+  const mode = e.target.value;
+  if (!SESSION_ID) return;
+  try {
+    const r = await fetch(window.API + '/set-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID, mode })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      showMsg('analyzeMsg', 'ok', `✅ Switched to ${mode} mode`);
+    } else {
+      showMsg('analyzeMsg', 'warn', `⚠ Could not switch to ${mode}`);
+    }
+  } catch(e) { console.error(e); }
+});
+
+// ─── analyze ───
+$('analyzeBtn').addEventListener('click', async () => {
+  if (!SESSION_ID) { showMsg('analyzeMsg', 'error', 'Login pehle karein.'); return; }
+
+  const symbol = $('symbol').value;
+  const timeframe = parseInt($('timeframe').value);
+  const auto_trade = $('autoTrade').checked;
+  const trade_mode = $('tradeMode').value;
+
+  $('analyzeBtn').disabled = true;
+  showMsg('analyzeMsg', 'info',
+    `<span class="spinner"></span>Running 8-model ensemble on ${symbol}… (25–60 seconds)`);
+  $('resultCard').classList.remove('hidden');
+  $('modelGrid').innerHTML = '';
+  $('finalBox').innerHTML = '';
+  $('tradeBox').innerHTML = '';
+  $('metaInfo').textContent = '';
+
+  try {
+    const r = await fetch(window.API + '/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: SESSION_ID,
+        symbol, timeframe, auto_trade, trade_mode
+      })
+    });
+    const j = await r.json();
+    renderResult(j);
+  } catch(e) {
+    showMsg('analyzeMsg', 'error', '❌ ' + e.message);
+  }
+  $('analyzeBtn').disabled = false;
+  loadHistory();
+});
+
+function renderResult(j) {
+  if (j.error) {
+    showMsg('analyzeMsg', 'error', '❌ ' + j.error + (j.warning ? ' — ' + j.warning : ''));
+  } else {
+    showMsg('analyzeMsg', 'ok', `✅ Analyzed ${j.symbol} in ${(j.elapsed_ms/1000).toFixed(1)}s`);
+  }
+  if (j.warning) {
+    const el = document.createElement('div');
+    el.className = 'msg warn';
+    el.textContent = '⚠ ' + j.warning;
+    $('analyzeMsg').appendChild(el);
+  }
+
+  // model grid
+  if (j.model_results) {
+    const grid = $('modelGrid');
+    grid.innerHTML = '';
+    j.model_results.forEach(m => {
+      const d = (m.decision || '').toLowerCase();
+      const cls = m.error ? 'error' : (d === 'call' ? 'call' : d === 'put' ? 'put' : 'neutral');
+      const row = document.createElement('div');
+      row.className = 'model-row ' + cls;
+      row.innerHTML = `
+        <div class="model-short">${m.short || '?'}</div>
+        <div class="model-info">
+          <div class="model-name">${m.name || m.model || 'Unknown'}</div>
+          <div class="model-reason">${m.error ? '❌ ' + m.error : (m.reason || '—')}</div>
+        </div>
+        <div class="model-right">
+          <div class="model-decision">${m.error ? 'ERR' : (m.decision || '—')}</div>
+          <div class="model-conf">${m.confidence != null ? m.confidence + '%' : '—'}</div>
+        </div>
+      `;
+      grid.appendChild(row);
+    });
+  }
+
+  // final box
+  if (j.decision) {
+    const dec = j.decision;
+    const cls = dec === 'CALL' ? 'call' : dec === 'PUT' ? 'put' : 'none';
+    const v = j.votes || {};
+    const callPct = v.call_pct || 0;
+    const putPct = v.put_pct || 0;
+    const neutPct = v.neutral_pct || 0;
+
+    $('finalBox').innerHTML = `
+      <div class="final ${cls}">
+        <div class="final-label">Final Decision</div>
+        <div class="final-decision">${dec}</div>
+        <div class="final-conf">Confidence: ${j.confidence}%</div>
+        <div class="final-votes">
+          CALL: ${callPct}% [${(v.call_models||[]).join(', ') || '—'}] ·
+          PUT: ${putPct}% [${(v.put_models||[]).join(', ') || '—'}] ·
+          NEUTRAL: ${neutPct}%
+        </div>
+        <div class="progress">
+          <div class="seg call" style="width:${callPct}%"></div>
+          <div class="seg neutral" style="width:${neutPct}%"></div>
+          <div class="seg put" style="width:${putPct}%"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // trade result
+  if (j.trade_result) {
+    const t = j.trade_result;
+    if (t.ok) {
+      $('tradeBox').innerHTML = `
+        <div class="msg ok" style="margin-top:14px;">
+          ✅ Auto-trade placed: ${t.direction} on ${t.symbol} (${t.amount}$ / ${t.duration}s)
+          <br>Trade ID: <code>${t.trade_id || '—'}</code>
+        </div>`;
+    } else {
+      $('tradeBox').innerHTML = `
+        <div class="msg error" style="margin-top:14px;">
+          ⚠ Auto-trade failed: ${t.error || 'unknown'}
+        </div>`;
+    }
+  }
+
+  // meta
+  if (j.market_data && j.market_data.indicators) {
+    const ind = j.market_data.indicators;
+    $('metaInfo').textContent =
+      `Price: ${j.market_data.current_price} · RSI: ${ind.rsi_14} · EMA20: ${ind.ema_20} · ` +
+      `EMA50: ${ind.ema_50} · Trend: ${ind.trend}`;
+  }
+}
+
+// ─── history ───
+async function loadHistory() {
+  try {
+    const r = await fetch(window.API + '/history');
+    const j = await r.json();
+    const box = $('historyList');
+    if (!j.items || !j.items.length) {
+      box.innerHTML = '<div style="color:var(--dim);">No analyses yet.</div>';
+      return;
+    }
+    box.innerHTML = j.items.slice(0, 10).map(it => {
+      const date = new Date(it.created_at * 1000).toLocaleString();
+      const cls = it.decision === 'CALL' ? 'var(--green)' :
+                  it.decision === 'PUT' ? 'var(--red)' : 'var(--gold)';
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="color:${cls};font-weight:700;">${it.decision}</span>
+        · ${it.symbol} · ${it.timeframe}s
+        · <span style="color:var(--dim);">${it.confidence}%</span>
+        <span style="float:right;color:var(--dim);font-size:11px;">${date}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ─── helpers ───
+function showMsg(id, kind, html) {
+  const el = $(id);
+  el.innerHTML = `<div class="msg ${kind}">${html}</div>`;
+}
+
+// ─── init ───
+loadSymbols();
+</script>
+</body>
+</html>
